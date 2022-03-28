@@ -1,0 +1,275 @@
+//Serch all teachers
+db.teacher.find()
+
+//Serch all students
+db.students.find()
+
+//Serch all teachers where payment:2000 and print only name & payment
+db.teacher.find(
+{payment: 2000},
+{
+name: true,
+payment: 1,
+_id: 0
+}
+)
+
+//Serch all teachers with several filters
+db.teacher.find({
+$or: [
+{payment:2000},
+{payment:2500},
+{class_curator:0}
+]
+})
+
+//Serch all teachers with and parametres
+db.teacher.find({
+$and: [
+{payment:2500},
+{class_curator:6}
+]
+})
+
+//Regulars expresions(while cards)
+
+//Serch all teachers where name starts with S
+db.teacher.find({
+name:/^S/
+})
+
+//Serch all teachers where name starts with S
+db.teacher.find({
+name:/^S/i //ignor latters big or small
+})
+
+//Serch all teachers where name ends with ch
+db.teacher.find({
+name:/ch$/i
+})
+
+//Serch all teachers where names have this symbols in the middle
+db.teacher.find({
+name:/.*tor.*/i
+})
+
+//Сортування від меньшого до більшого
+db.teacher
+.find({})
+.sort({payment:1})
+
+//Сортування від більшого по меньше
+db.teacher
+.find()
+.sort({payment:-1})
+
+//Сортування від меньшого по більше по класу куратора
+db.teacher
+.find()
+.sort({class_curator:1})
+
+//Фільтр зп більше або дорвінює 2500
+db.teacher
+.find({payment:{$gte:2500}})
+
+//Фільтр зп більше 2500
+db.teacher
+.find({payment:{$gt:2500}})
+
+//Фільтр зп меньше або дорвінює 2500
+db.teacher
+.find({payment:{$lte:2500}})
+
+//Фільтр зп меньше 2500
+db.teacher
+.find({payment:{$lt:2500}})
+
+//Фільтр зп не дорівнює 2500
+db.teacher
+.find({payment:{$ne:2500}})
+
+//Пошук декілька класів але без використання ор
+db.teacher.find({
+class_curator:{$in: [7,8,9]}
+})
+
+//Пошук декілька класів, які не в діапозоні, але без використання ор
+db.teacher.find({
+class_curator:{$nin: [7,8,9]}
+})
+
+//Пошук декілька класів, які не в діапозоні, але без використання ор(аналог ніна)
+db.teacher.find({
+$not:{
+class_curator:{$nin: [7,8,9]}
+}})
+
+// Вставляємо новий об'єкт
+db.teacher.insertOne({
+name: "Dima",
+profession: "developer",
+cars:[
+{model:"Volvo"},
+{model:"Lanos"}
+]
+})
+
+// Вставляємо новий об'єкт
+db.teacher.insertOne({
+name: "Vova",
+profession: "developer",
+cars:[
+{model:"Mazda"},
+{model:"Lanos"},
+{model:"Oka"}
+]
+})
+
+//Update first object in the db with developer
+db.getCollection("teacher").updateOne(
+{profession: "developer"},//what we update
+{$set:{girl: true}},//which field we update
+)
+
+//Update all objects in the db with developer
+db.getCollection("teacher").updateMany(
+{profession: "developer"},//what we update
+{$set:{girl: true}},//which field we update
+)
+
+// Вставляємо новий об'єкт
+db.teacher.insertOne({
+name: "Olga",
+profession: "developer",
+cars:[
+{model:"Volvo"},
+{model:"Oka"}
+]
+})
+
+//Search teacher where car length :2
+db.teacher.find(
+{cars: {$size:3}}
+)
+
+//Search teacher where car is not exist
+db.teacher.find(
+{cars: {$exists: false}}
+)
+
+//Search teacher where car is exist
+db.teacher.find(
+{cars: {$exists: true}}
+)
+
+//Search teacher where car length and update name of this cars
+db.teacher.updateMany(
+{cars: {$size: 2}},
+{
+$set:{
+"cars.$[].model": "Bibika"
+}
+}
+)
+
+//Search teacher where car length and update name of lanos(1 index)
+db.teacher.updateMany(
+{cars: {$size: 3}},
+{
+$set:{
+"cars.1.model": "Bibika"
+}
+}
+)
+
+//Search the object where in array of object we have mazda car
+db.teacher.find({"cars.model" :"Mazda"})
+
+//Погрупувати по зп та вивести каунт зп в тічерах та посортувати і показати з зп 2 або більше
+db.teacher.aggregate([
+{
+$group:{
+_id: "$payment",
+countOfTeachers:{
+$sum:1
+}
+}
+},
+{
+$sort:{
+countOfTeachers:1,
+_id: -1
+}
+},
+])
+
+//Погрупувати по зп та вивести філду яка рхує кількість тічерів в якій зп більше 3500
+db.teacher.aggregate([
+{$match: {payment:  {$gte:3500}}},
+{$count: "XXX"}
+])
+
+//Погрупувати по зп та вивести суму зп тічерів
+db.teacher.aggregate([
+{
+$group:{
+"_id": "$payment",
+sumOfPayments:{
+$sum: "$payment"
+}
+}
+}
+])
+
+//Погрупувати по зп та вивести суму зп всіх тічерів, та забрати поле id
+db.teacher.aggregate([
+{
+$group:{
+"_id": 0,
+sumOfPayments:{
+$sum: "$payment"
+}
+}
+},
+{
+$project:{
+teacherpayment : "$sumOfPayments",
+pay: "$_id",
+_id:0
+}
+}
+])
+
+//Агрегатні функії
+db.teacher.aggregate([
+{
+$group:{
+"_id": 0,
+sumOfPayments:{
+//$sum: "$payment"
+//$avg: "$payment"
+//$max: "$payment"
+$min:  "$payment"
+}
+}
+}
+])
+
+//LookUP(Join)
+db.teacher.aggregate([
+{
+$lookup:
+{
+from: "students",
+localField: "class_curator",
+foreignField: "class",
+as: "my_students"
+}
+}
+])
+
+//Delete where field girl exists
+db.teacher.deleteMany({girl: {$exists: true}})
+
+
+
